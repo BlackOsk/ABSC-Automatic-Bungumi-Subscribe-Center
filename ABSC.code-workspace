@@ -1,0 +1,34 @@
+{
+  "folders": [
+    {
+      "name": "📂 PROJECT-ROOT",
+      "path": "."
+    },
+    {
+      "name": "🐹 BACKEND (Go)",
+      "path": "backend"
+    },
+    {
+      "name": "⚛️ FRONTEND (React)",
+      "path": "frontend"
+    }
+  ],
+  "settings": {
+    // 强制前后端使用各自的格式化工具
+    "[go]": {
+      "editor.defaultFormatter": "golang.go",
+      "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    // 隐藏多余的嵌套文件夹，保持侧边栏清爽
+    "files.exclude": {
+      "backend": true,
+      "frontend": true,
+      "**/node_modules": true,
+      "**/.git": true
+    }
+  }
+}

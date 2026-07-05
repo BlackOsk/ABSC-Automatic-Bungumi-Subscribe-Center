@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Go Backend",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/server/main.go",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "APP_ENV": "development",
+        "DB_PATH": "anime_dev.db",
+        // 如果你的电脑需要通过代理才能访问 TMDB，取消下行注释
+        // "HTTP_PROXY": "http://127.0.0.1:7890",
+        // "HTTPS_PROXY": "http://127.0.0.1:7890"
+      },
+      "showLog": true
+    },
+    {
+      "name": "Front-back sync debug (Vite + Go)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/server/main.go",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "APP_ENV": "development",
+        "DB_PATH": "anime_dev.db"
+      },
+      // ====== 联动核心 ======
+      "preLaunchTask": "Start Frontend Dev Server"
+    }
+  ]
+}
