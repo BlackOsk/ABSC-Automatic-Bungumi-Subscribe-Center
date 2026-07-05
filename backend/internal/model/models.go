@@ -33,7 +33,7 @@ type Subscription struct {
 type EpisodeOffset struct {
 	ID          uint      `gorm:"primaryKey;autoIncrement"`
 	MikanID     int       `gorm:"uniqueIndex:idx_mikan_season;column:mikan_id"`
-	Season      int       `gorm:"default:1;uniqueIndex:idx_mikan_season;column:season"`
+	Season      int       `gorm:"default:1;uniqueIndex:idx_mikan_season;column:season"` // idx_mikan_season，联合索引，确保同一季的偏移配置唯一
 	OffsetValue int       `gorm:"default:0;column:offset_value"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
