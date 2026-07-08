@@ -12,7 +12,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const MikanBaseURL = "https://mikanani.me"
+const MikanBaseURL = "https://mikanani.kas.pub"
 
 func ScrapeCurrentQuarter() ([]model.BangumiMetadata, error) {
 	// 1. 发送 HTTP 请求 (预留 UA 以免被CF拦截)
@@ -22,18 +22,18 @@ func ScrapeCurrentQuarter() ([]model.BangumiMetadata, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("请求 Mikan 失败: %w", err)
+		return nil, fmt.Errorf("[scraper.ScrapeCurrentQuarter] 请求 Mikan 失败: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Mikan 返回非200状态码: %d", resp.StatusCode)
+		return nil, fmt.Errorf("[scraper.ScrapeCurrentQuarter] Mikan 返回非200状态码: %d", resp.StatusCode)
 	}
 
 	// 2. 加载 DOM 文档
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("解析 HTML 失败: %w", err)
+		return nil, fmt.Errorf("[scraper.ScrapeCurrentQuarter] 解析 HTML 失败: %w", err)
 	}
 
 	var bangumis []model.BangumiMetadata
@@ -41,8 +41,19 @@ func ScrapeCurrentQuarter() ([]model.BangumiMetadata, error) {
 
 	// 3. 核心逆向解析：根据 Mikan 的网格结构进行 CSS 选择
 	// Mikan 首页按天排列，`.sk-bangumi` 或 `.mikan-main` 下包含每天的列
-	doc.Find(".sk-bangumi").Each(func(dayIdx int, dayList *goquery.Selection) {
-		// dayIdx 0-6 刚好代表周日到周六（需根据 Mikan 实际展示位置微调对应映射）
+	doc.Find(".sk-bangumi").Each(func(_ int, dayList *goquery.Selection) {
+		// 从数据源的html中的 data-dayofweek 提取星期
+		dayStr, exists := dayList.Attr("data-dayofweek")
+		var broadcastDay int
+		if exists {
+			var err error
+			broadcastDay, err = strconv.Atoi(dayStr)
+			if err != nil {
+				broadcastDay = -1
+			}
+		} else {
+			broadcastDay = -1
+		}
 
 		dayList.Find(".an-text").Each(func(_ int, s *goquery.Selection) {
 			title := strings.TrimSpace(s.Text())
@@ -61,7 +72,7 @@ func ScrapeCurrentQuarter() ([]model.BangumiMetadata, error) {
 			bangumi := model.BangumiMetadata{
 				MikanID:      mikanID,
 				TitleCN:      title,
-				BroadcastDay: dayIdx, // 记录更新周期
+				BroadcastDay: broadcastDay, // 记录更新日
 			}
 			bangumis = append(bangumis, bangumi)
 		})
