@@ -1,0 +1,42 @@
+package scraper
+
+import (
+	"os"
+	"testing"
+)
+
+func TestTmdbMessage(t *testing.T) {
+
+	// 从环境变量读取 API Key，避免把密钥硬编码提交到 Git
+	apiKey := os.Getenv("TMDB_API_KEY")
+	if apiKey == "" {
+		// 你也可以在这里临时填入你的 Key 进行本地测试
+		apiKey = "YOUR_TEMPORARY_TMDB_API_KEY"
+	}
+
+	if apiKey == "YOUR_TEMPORARY_TMDB_API_KEY" || apiKey == "" {
+		t.Skip("跳过测试：未检测到有效的 TMDB_API_KEY")
+	}
+
+	// 初始化客户端（如果本地电脑需要梯子，填入代理地址，不需要则留空 ""）
+	proxy := "http://127.0.0.1:7897"
+	client := NewTMDBClient(apiKey, proxy)
+
+	// 测试搜索当下热门的动漫
+	testTitle := "1111"
+	t.Logf("开始在 TMDB 中搜索动漫: %s ...", testTitle)
+
+	result, err := client.SearchAnime(testTitle)
+	if err != nil {
+		t.Fatalf("❌ 刮削失败: %v", err)
+	}
+
+	// 断言验证返回的信息
+	t.Logf("🎉 刮削成功！")
+	t.Logf("TMDB ID: %d", result.ID)
+	t.Logf("标准中文名: %s", result.Name)
+	t.Logf("原始名: %s", result.OriginalName)
+	t.Logf("高清海报路径: https://image.tmdb.org/t/p/w500%s", result.PosterPath)
+	t.Logf("中文剧情简介: %s", result.Overview)
+	t.Logf("首播日期: %s", result.FirstAirDate)
+}
