@@ -5,7 +5,7 @@ import "time"
 // BangumiMetadata 对应新番元数据表
 type BangumiMetadata struct {
 	MikanID       int       `gorm:"primaryKey;column:mikan_id"`
-	TMDBID        int       `gorm:"unique;column:tmdb_id"`
+	TMDBID        *int      `gorm:"unique;column:tmdb_id"`
 	TitleCN       string    `gorm:"not null;column:title_cn"`
 	TitleRaw      string    `gorm:"column:title_raw"`
 	Overview      string    `gorm:"column:overview"`
