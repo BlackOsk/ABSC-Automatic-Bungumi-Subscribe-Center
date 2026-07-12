@@ -14,6 +14,69 @@ import (
 
 const MikanBaseURL = "https://mikanani.kas.pub"
 
+// parseNumericSeason 将中文或阿拉伯数字转为标准 int
+func parseNumericSeason(s string) int {
+	mapping := map[string]int{
+		"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10,
+	}
+	if val, ok := mapping[s]; ok {
+		return val
+	}
+	if val, err := strconv.Atoi(s); err == nil {
+		return val
+	}
+	return 1
+}
+
+// parseRomanSeason 将各种符号的罗马数字转为标准 int
+func parseRomanSeason(s string) int {
+	mapping := map[string]int{
+		"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5, "VI": 6, "VII": 7, "VIII": 8, "IX": 9, "X": 10,
+		"Ⅰ": 1, "Ⅱ": 2, "Ⅲ": 3, "Ⅳ": 4, "Ⅴ": 5, "Ⅵ": 6, "Ⅶ": 7, "Ⅷ": 8, "Ⅸ": 9, "Ⅹ": 10,
+	}
+	if val, ok := mapping[strings.ToUpper(s)]; ok {
+		return val
+	}
+	return 1
+}
+
+// cleanTitleAndExtractSeason 提取季数并返回剔除了季数字符串的干净标题
+func cleanTitleAndExtractSeason(rawTitle string) (string, int) {
+	// 1. 边界防御：将所有奇形怪状的特殊空格（全角、非换行空格）全部归一化为标准英文空格
+	t := rawTitle
+	t = strings.ReplaceAll(t, "\u00a0", " ")
+	t = strings.ReplaceAll(t, "\u3000", " ")
+
+	currentSeason := 1
+
+	// 2. 策略A：匹配 "第X季"、"第X期"、"第X部分"
+	reChinese := regexp.MustCompile(`第\s*([一二三四五六七八九十\d]+)\s*[季期部分]`)
+	if loc := reChinese.FindStringSubmatchIndex(t); len(loc) > 0 {
+		numStr := t[loc[2]:loc[3]]
+		currentSeason = parseNumericSeason(numStr)
+		// 挖掉这部分季数噪音
+		t = t[:loc[0]] + " " + t[loc[1]:]
+	}
+
+	// 3. 策略B：匹配末尾或独立的罗马数字 (如 Clevatess II-魔兽之王 / 汪！II)
+	reRoman := regexp.MustCompile(`(?i)\s+([ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]|[IVXLCDM]+)([\s\-]|$)`)
+	if loc := reRoman.FindStringSubmatchIndex(t); len(loc) > 0 {
+		romanStr := t[loc[2]:loc[3]]
+		rNum := parseRomanSeason(romanStr)
+		// 确认为有效罗马数字则提取并挖掉噪音
+		if rNum > 1 || strings.ToUpper(romanStr) == "I" {
+			currentSeason = rNum
+			t = t[:loc[0]] + " " + t[loc[1]:]
+		}
+	}
+
+	// 4. 收尾清理：干掉连续的多余空格及无用连接符（如 ～ -）
+	t = regexp.MustCompile(`[-～~〜—]`).ReplaceAllString(t, " ")
+	t = regexp.MustCompile(`\s+`).ReplaceAllString(t, " ")
+
+	return t, currentSeason
+}
+
 func ScrapeCurrentQuarter() ([]model.BangumiMetadata, error) {
 	// 1. 发送 HTTP 请求 (预留 UA 以免被CF拦截)
 	client := &http.Client{Timeout: 10 * time.Second}

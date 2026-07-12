@@ -19,11 +19,11 @@ func TestTmdbMessage(t *testing.T) {
 	}
 
 	// 初始化客户端（如果本地电脑需要梯子，填入代理地址，不需要则留空 ""）
-	proxy := "http://127.0.0.1:7897"
+	proxy := ""
 	client := NewTMDBClient(apiKey, proxy)
 
 	// 测试搜索当下热门的动漫
-	testTitle := "1111"
+	testTitle := "关于我转生变成史莱姆这档事"
 	t.Logf("开始在 TMDB 中搜索动漫: %s ...", testTitle)
 
 	result, err := client.SearchAnime(testTitle)

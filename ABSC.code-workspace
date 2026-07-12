@@ -29,6 +29,18 @@
       "frontend": true,
       "**/node_modules": true,
       "**/.git": true
+    },
+
+    // 修改测试面板的全局超时时间为 5 分钟
+    "go.testTimeout": "5m",
+
+    // 让左侧测试面板在运行时，也能无缝注入开发环境变量
+    "go.testEnvVars": {
+      //"APP_ENV": "development",
+      //"TMDB_API_KEY": "你的TMDB密钥（可选，也可以写在系统变量里）",
+      //"HTTP_PROXY": "http://127.0.0.1:7890",
+      //"HTTPS_PROXY": "http://127.0.0.1:7890"
     }
   }
 }
+
