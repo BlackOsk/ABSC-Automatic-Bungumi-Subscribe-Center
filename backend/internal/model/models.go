@@ -37,3 +37,25 @@ type EpisodeOffset struct {
 	OffsetValue int       `gorm:"default:0;column:offset_value"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
+
+// MikanSubgroupResource 承载单个字幕组针对该番剧的RSS订阅源
+type MikanSubgroupResource struct {
+	MikanID      int            `gorm:"primaryKey;column:mikan_id"`    // 番剧ID
+	SubgroupID   int            `gorm:"primaryKey;column:subgroup_id"` // 字幕组ID
+	SubgroupName string         `gorm:"not null;column:subgroup_name"` // 字幕组中文名
+	RSSURL       string         `gorm:"column:rss_url"`                // 字幕组专属RSS链接
+	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
+	Episodes     []MikanEpisode `gorm:"foreignKey:MikanID,SubgroupID;references:MikanID,SubgroupID;constraint:OnDelete:CASCADE;"`
+}
+
+// MikanEpisode 记录当前字幕组已经发布过的历史单集种子文件列表
+type MikanEpisode struct {
+	ID          uint      `gorm:"primaryKey;autoIncrement"`
+	MikanID     int       `gorm:"uniqueIndex:idx_ep_unique;column:mikan_id"`
+	SubgroupID  int       `gorm:"uniqueIndex:idx_ep_unique;column:subgroup_id"`
+	Title       string    `gorm:"uniqueIndex:idx_ep_unique;column:title"` // 种子原始长文件名
+	Size        string    `gorm:"column:size"`                            // 文件大小 (如 450.2MB)
+	PublishTime string    `gorm:"column:publish_time"`                    // 发布时间 (如 2026/07/18 20:30)
+	Magnet      string    `gorm:"column:magnet"`                          // 磁力链接
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+}

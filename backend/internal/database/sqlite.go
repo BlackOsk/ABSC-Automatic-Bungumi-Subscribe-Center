@@ -22,7 +22,7 @@ func InitDB(dbPath string) {
 	log.Println("📂 [database.InitDB] SQLite 数据库连接成功...")
 
 	// 自动迁移表结构
-	err = DB.AutoMigrate(&model.BangumiMetadata{}, &model.Subscription{}, &model.EpisodeOffset{})
+	err = DB.AutoMigrate(&model.BangumiMetadata{}, &model.Subscription{}, &model.EpisodeOffset{}, &model.MikanSubgroupResource{}, &model.MikanEpisode{})
 	if err != nil {
 		log.Fatalf("❌ [database.InitDB] 数据库表结构迁移失败: %v", err)
 	}

@@ -35,6 +35,24 @@ type TMDBSearchResponse struct {
 	TotalResults int          `json:"total_results"`
 }
 
+// TMDBSeason 映射剧集详情中单季的简要信息
+type TMDBSeason struct {
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	SeasonNumber int    `json:"season_number"` // 季数
+	EpisodeCount int    `json:"episode_count"` // 这一季的总集数
+	PosterPath   string `json:"poster_path"`
+}
+
+// TMDBTVDetails 映射 /tv/{series_id} 接口返回的完整剧集详情数据
+type TMDBTVDetails struct {
+	ID               int          `json:"id"`
+	Name             string       `json:"name"`
+	NumberOfSeasons  int          `json:"number_of_seasons"`  // 总季数
+	NumberOfEpisodes int          `json:"number_of_episodes"` // 全剧总集数
+	Seasons          []TMDBSeason `json:"seasons"`            // 核心：所有季度的数组
+}
+
 // NewTMDBClient 初始化客户端，支持传入可选的 HTTP 代理
 func NewTMDBClient(apiKey string, proxyURL string) *TMDBClient {
 	transport := &http.Transport{}
@@ -107,4 +125,39 @@ func (c *TMDBClient) SearchAnime(title string) (*TMDBResult, error) {
 
 	// 如果没有 JP 标签，默认信任第一个搜索结果
 	return &searchResp.Results[0], nil
+}
+
+// GetTVDetails 根据 TMDBID 获取该动漫的完整季度与集数详情
+func (c *TMDBClient) GetTVDetails(seriesID int) (*TMDBTVDetails, error) {
+	// 1. 构建请求 URL
+	detailsURL := fmt.Sprintf("%s/tv/%d", TMDBBaseURL, seriesID)
+	req, err := http.NewRequest("GET", detailsURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. 携带必备参数
+	q := req.URL.Query()
+	q.Add("api_key", c.APIKey)
+	q.Add("language", "zh-CN")
+	req.URL.RawQuery = q.Encode()
+
+	// 3. 发起请求
+	resp, err := c.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("[GetTVDetails] 请求 TMDB 详情失败: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("[GetTVDetails] TMDB 详情接口返回异常状态码: %d", resp.StatusCode)
+	}
+
+	// 4. 反序列化
+	var details TMDBTVDetails
+	if err := json.NewDecoder(resp.Body).Decode(&details); err != nil {
+		return nil, fmt.Errorf("[GetTVDetails] 解析 TMDB 详情 JSON 失败: %w", err)
+	}
+
+	return &details, nil
 }

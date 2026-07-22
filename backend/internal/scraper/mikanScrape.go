@@ -132,10 +132,14 @@ func ScrapeCurrentQuarter() ([]model.BangumiMetadata, error) {
 			}
 			mikanID, _ := strconv.Atoi(matches[1])
 
+			// 清理标题并提取季数
+			cleanTitle, currentSeason := cleanTitleAndExtractSeason(title)
+
 			bangumi := model.BangumiMetadata{
-				MikanID:      mikanID,
-				TitleCN:      title,
-				BroadcastDay: broadcastDay, // 记录更新日
+				MikanID:       mikanID,
+				TitleCN:       cleanTitle,
+				BroadcastDay:  broadcastDay, // 记录更新日
+				CurrentSeason: currentSeason,
 			}
 			bangumis = append(bangumis, bangumi)
 		})
