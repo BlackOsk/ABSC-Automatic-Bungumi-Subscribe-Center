@@ -203,3 +203,17 @@ func (c *QBitClient) SetLocation(hashes string, location string) error {
 	}
 	return nil
 }
+
+// RenameFile 执行种子内文件重命名操作
+func (c *QBitClient) RenameFile(hash, oldPath, newPath string) error {
+	data := url.Values{}
+	data.Set("hash", hash)
+	data.Set("oldPath", oldPath)
+	data.Set("newPath", newPath)
+
+	err, _ := c.postForm("torrents/renameFile", data)
+	if err != nil {
+		return fmt.Errorf("重命名文件失败 [Hash: %s]: %w", hash, err)
+	}
+	return nil
+}

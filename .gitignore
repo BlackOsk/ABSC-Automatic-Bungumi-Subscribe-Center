@@ -2,4 +2,4 @@
 *.env
 *.code-workspace
 *.http
-*_test.go
+*test.go

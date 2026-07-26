@@ -4,9 +4,46 @@ import (
 	"ABSC/internal/database"
 	"ABSC/internal/model"
 	"ABSC/internal/scraper"
+	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
 	"testing"
 )
+
+func TestExt(t *testing.T) {
+	// 测试 Ext 函数
+	ext := filepath.Ext(".s/df/ssskkjiuyy/123-456-789.mp3")
+	fmt.Println(ext) // 输出: 123-456-789
+}
+
+func TestGetEps(t *testing.T) {
+	var episodePatterns = []*regexp.Regexp{
+		regexp.MustCompile(`\s([0-9]{2})\s`),
+		regexp.MustCompile(`-([0-9]{2})-`),
+		regexp.MustCompile(`\[([0-9]{2})\]`),
+		regexp.MustCompile(`\[([0-9]{2})v[0-9]\]`),
+		regexp.MustCompile(`\s([0-9]{2})v[0-9]\s`),
+		regexp.MustCompile(`(?i)E([0-9]{1,2})`), // 容错支持 E01、E1 格式
+	}
+
+	fileName := "E3"
+
+	for _, pattern := range episodePatterns {
+		matches := pattern.FindStringSubmatch(fileName)
+		if len(matches) >= 2 {
+			absEp, err := strconv.Atoi(matches[1])
+			if err == nil {
+				t.Log(absEp)
+			}
+			t.Log(absEp)
+		}
+	}
+
+	//t.Logf("%02d", 6)
+
+}
 
 func TestSyncCurrentQuarterBangumi(t *testing.T) {
 
