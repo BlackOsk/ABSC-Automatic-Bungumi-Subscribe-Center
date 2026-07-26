@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -82,7 +83,7 @@ func NewQBitClient(baseURL, username, password string) (*QBitClient, error) {
 }
 
 // postForm 内部辅助函数：处理标准的 x-www-form-urlencoded POST 请求
-func (c *QBitClient) postForm(apiPath string, data url.Values) (*http.Response, error) {
+func (c *QBitClient) postForm(apiPath string, data url.Values) ([]byte, error) {
 	apiURL := fmt.Sprintf("%s/api/v2/%s", c.BaseURL, apiPath)
 
 	req, err := http.NewRequest("POST", apiURL, strings.NewReader(data.Encode()))
@@ -101,7 +102,12 @@ func (c *QBitClient) postForm(apiPath string, data url.Values) (*http.Response, 
 		return nil, fmt.Errorf("[postForm] qB API [%s] 返回异常状态码: %d", apiPath, resp.StatusCode)
 	}
 
-	return resp, nil
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 // Login 登录并激活会话
@@ -164,11 +170,36 @@ func (c *QBitClient) SetRSSRule(ruleName string, ruleDef RuleDefinition) error {
 }
 
 // GetTorrents 获取最近的种子列表
-// func (c *QBitClient) GetTorrents(limit int) ([]TorrentInfo, error) {
-// 	data := url.Values{}
-// 	data.Set("filter", "all")
-// 	data.Set("sort", "added_on")
-// 	data.Set("reverse", "true")
-// 	data.Set("limit", fmt.Sprintf("%d", limit))
+func (c *QBitClient) GetTorrents(limit int) ([]TorrentInfo, error) {
+	data := url.Values{}
+	data.Set("filter", "all")
+	data.Set("sort", "added_on")
+	data.Set("reverse", "true")
+	data.Set("limit", fmt.Sprintf("%d", limit))
 
-// }
+	respByte, err := c.postForm("torrents/info", data)
+	if err != nil {
+		return nil, fmt.Errorf("[GetTorrents] 获取种子列表失败: %w", err)
+	}
+
+	var torrents []TorrentInfo
+	if err := json.Unmarshal(respByte, &torrents); err != nil {
+		return nil, fmt.Errorf("[GetTorrents] 解码种子列表失败: %w", err)
+	}
+
+	return torrents, nil
+
+}
+
+// SetLocation 更改种子的物理保存路径 (对应 qB API /api/v2/torrents/setLocation)
+func (c *QBitClient) SetLocation(hashes string, location string) error {
+	data := url.Values{}
+	data.Set("hashes", hashes)
+	data.Set("location", location)
+
+	_, err := c.postForm("torrents/setLocation", data)
+	if err != nil {
+		return fmt.Errorf("更改种子保存路径失败 [Location: %s]: %w", location, err)
+	}
+	return nil
+}

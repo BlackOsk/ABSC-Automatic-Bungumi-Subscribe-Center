@@ -27,7 +27,6 @@ func TestExtractSeason(t *testing.T) {
 
 	err = DB.Model(&model.BangumiMetadata{}).
 		Where("tmdb_id IS NULL").
-		//Where("title_cn IS ?", "无职转生 第三季 ～到了异世界就拿出真本事～").
 		Find(&uncompletedBangumis).Error
 	if err != nil {
 		t.Logf("查询未完善的动漫失败: %v", err)

@@ -59,3 +59,33 @@ func TestQBitPipelineReal(t *testing.T) {
 
 	t.Log("🎉 [大获全胜] 登录 -> 建分类 -> 加RSS -> 设过滤规则 全流水线原子测试在 Go 中完美跑通！")
 }
+
+// TestGetQbTorrents 测试获取种子列表
+func TestGetQbTorrents(t *testing.T) {
+	qbURL := "http://192.168.2.148:8080"
+	username := "1"
+	password := "1"
+
+	t.Log("🚀 正在初始化 Go 强类型 qBittorrent 客户端...")
+	client, err := NewQBitClient(qbURL, username, password)
+	if err != nil {
+		t.Fatalf("初始化客户端失败: %v", err)
+	}
+
+	// 1. 测试登录接口
+	t.Log("🔐 步骤一：尝试登录验证并提取 SID Cookie...")
+	if err := client.Login(); err != nil {
+		t.Fatalf("❌ 登录失败: %v", err)
+	}
+	t.Log("✅ 登录成功，会话已激活")
+
+	// 2. 获取种子列表
+	var torrentinfo []TorrentInfo
+	torrentinfo, err = client.GetTorrents(10)
+	if err != nil {
+		t.Fatalf("❌ 获取种子列表失败: %v", err)
+	}
+	for _, torrent := range torrentinfo {
+		t.Log(torrent.SavePath)
+	}
+}
