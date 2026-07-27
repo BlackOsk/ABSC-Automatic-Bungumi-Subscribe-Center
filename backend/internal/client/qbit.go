@@ -217,3 +217,35 @@ func (c *QBitClient) RenameFile(hash, oldPath, newPath string) error {
 	}
 	return nil
 }
+
+// RemoveRSSItem 删除 RSS 订阅源 (对应 /api/v2/rss/removeItem)
+func (c *QBitClient) RemoveRSSItem(path string) error {
+	data := url.Values{}
+	data.Set("path", path)
+	_, err := c.postForm("rss/removeItem", data)
+	return err
+}
+
+// RemoveRSSRule 删除 RSS 下载规则 (对应 /api/v2/rss/removeRule)
+func (c *QBitClient) RemoveRSSRule(ruleName string) error {
+	data := url.Values{}
+	data.Set("path", ruleName)
+	_, err := c.postForm("rss/removeRule", data)
+	return err
+}
+
+// DeleteTorrents 批量安全删除种子及物理文件 (对应 /api/v2/torrents/delete)
+func (c *QBitClient) DeleteTorrents(hashes []string, deleteFiles bool) error {
+	if len(hashes) == 0 {
+		return nil
+	}
+	data := url.Values{}
+	data.Set("hashes", strings.Join(hashes, "|"))
+	deleFilesStr := "false"
+	if deleteFiles {
+		deleFilesStr = "true"
+	}
+	data.Set("deleteFiles", deleFilesStr)
+	_, err := c.postForm("torrents/delete", data)
+	return err
+}
