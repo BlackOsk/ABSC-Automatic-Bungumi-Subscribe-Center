@@ -24,10 +24,9 @@ func TestQBitPipelineReal(t *testing.T) {
 	t.Log("✅ 登录成功，会话已激活")
 
 	// 2. 模拟前端点按：订阅一部测试动漫
-	testAnimeTitle := "再见，拉拉"
-	testSavePath := "/downloads/Series/再见，拉拉/Season 1"
-	testRSS := "https://mikanani.me/RSS/Bangumi?bangumiId=4015&subgroupid=1236" // LoliHouse 的某个订阅
-
+	testAnimeTitle := "无职转生S3"
+	testSavePath := "/downloads/Series/Mushoku Tensei Jobless Reincarnation/Season 3"
+	testRSS := "https://mikanani.me/RSS/Bangumi?bangumiId=3995&subgroupid=1252"
 	// 3. 测试创建分类
 	t.Logf("📂 步骤二：尝试在 qB 中创建测试分类 [%s] 并在 TrueNAS 规划路径...", testAnimeTitle)
 	if err := client.CreateCategory(testAnimeTitle, testSavePath); err != nil {
@@ -57,7 +56,7 @@ func TestQBitPipelineReal(t *testing.T) {
 		t.Fatalf("❌ 配置自动化下载规则失败: %v", err)
 	}
 
-	t.Log("🎉 [大获全胜] 登录 -> 建分类 -> 加RSS -> 设过滤规则 全流水线原子测试在 Go 中完美跑通！")
+	t.Log("登录 -> 建分类 -> 加RSS -> 设过滤规则 全流水线原子测试在 Go 中完美跑通！")
 }
 
 // TestGetQbTorrents 测试获取种子列表

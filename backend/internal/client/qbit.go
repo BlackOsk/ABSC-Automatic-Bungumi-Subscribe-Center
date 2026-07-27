@@ -211,7 +211,7 @@ func (c *QBitClient) RenameFile(hash, oldPath, newPath string) error {
 	data.Set("oldPath", oldPath)
 	data.Set("newPath", newPath)
 
-	err, _ := c.postForm("torrents/renameFile", data)
+	_, err := c.postForm("torrents/renameFile", data)
 	if err != nil {
 		return fmt.Errorf("重命名文件失败 [Hash: %s]: %w", hash, err)
 	}

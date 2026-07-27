@@ -92,7 +92,7 @@ func (s *BangumiService) enrichTMDBInfo(b *model.BangumiMetadata) {
 			continue
 		}
 
-		log.Printf("[enrichTMDBInfo] 🔍 尝试使用检索词 [%s] 请求 TMDB...", queryTitle)
+		log.Printf("[enrichTMDBInfo] 尝试使用检索词 [%s] 请求 TMDB...", queryTitle)
 		tmdbResult, err = s.TMDBClient.SearchAnime(queryTitle)
 
 		if err == nil && tmdbResult != nil {
@@ -100,14 +100,14 @@ func (s *BangumiService) enrichTMDBInfo(b *model.BangumiMetadata) {
 			successQueryTitle = queryTitle
 			break
 		}
-		log.Printf("[enrichTMDBInfo] ℹ️ 检索词 [%s] 未命中 TMDB，准备剥离末尾副标题并退级重试...", queryTitle)
+		log.Printf("[enrichTMDBInfo] 检索词 [%s] 未命中 TMDB，准备剥离末尾副标题并退级重试...", queryTitle)
 	}
 
 	// 最终降级兜底：如果一轮失败了
 	if successQueryTitle == "" || tmdbResult == nil {
-		log.Printf("[enrichTMDBInfo] ⚠️ [%s] 在经历全轮次副标题剥离后依然无法在 TMDB 匹配，仅保留 Mikan 基础数据", b.TitleCN)
+		log.Printf("[enrichTMDBInfo] [%s] 在经历全轮次副标题剥离后依然无法在 TMDB 匹配，仅保留 Mikan 基础数据", b.TitleCN)
 		if err := database.DB.Save(b).Error; err != nil {
-			log.Printf("[enrichTMDBInfo] ⚠️ [%s] 的Mikan信息落盘失败: %v", b.TitleCN, err)
+			log.Printf("[enrichTMDBInfo] [%s] 的Mikan信息落盘失败: %v", b.TitleCN, err)
 		}
 		return
 	}
@@ -154,7 +154,7 @@ func (s *BangumiService) CalculateAutoOffset(tmdbID int, targetSeason int) int {
 	// 1. 获取该番剧的所有季信息
 	tmdbDetails, err := s.TMDBClient.GetTVDetails(tmdbID)
 	if err != nil {
-		log.Printf("[CalculateAutoOffset] ⚠️ TMDB ID %d 获取 TMDB 详情失败: %v", tmdbID, err)
+		log.Printf("[CalculateAutoOffset] TMDB ID %d 获取 TMDB 详情失败: %v", tmdbID, err)
 		return 0
 	}
 
@@ -164,7 +164,7 @@ func (s *BangumiService) CalculateAutoOffset(tmdbID int, targetSeason int) int {
 	for _, season := range tmdbDetails.Seasons {
 		if season.SeasonNumber > 0 && season.SeasonNumber < targetSeason {
 			autoOffset += season.EpisodeCount
-			log.Printf("自动推导累加：第 %d 季有 %d 集", season.SeasonNumber, season.EpisodeCount)
+			log.Printf("动漫 TMDB_ID: %d; 自动推导累加：第 %d 季有 %d 集", tmdbID, season.SeasonNumber, season.EpisodeCount)
 		}
 
 	}

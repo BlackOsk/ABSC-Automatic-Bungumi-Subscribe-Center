@@ -91,3 +91,26 @@ func TestSyncCurrentQuarterBangumi(t *testing.T) {
 	}
 
 }
+
+func TestCalculateAutoOffset(t *testing.T) {
+	// 1. 环境参数准备：从环境变量读取 API Key，避免把密钥硬编码提交到 Git
+	apiKey := os.Getenv("TMDB_API_KEY")
+	if apiKey == "" {
+		// 你也可以在这里临时填入你的 Key 进行本地测试
+		apiKey = "YOUR_TEMPORARY_TMDB_API_KEY"
+	}
+
+	if apiKey == "YOUR_TEMPORARY_TMDB_API_KEY" || apiKey == "" {
+		t.Skip("跳过测试：未检测到有效的 TMDB_API_KEY")
+	}
+
+	// 3. 初始化客户端（如果本地电脑需要梯子，填入代理地址，不需要则留空 ""）
+	proxy := "" //"http://127.0.0.1:7897"
+	client := scraper.NewTMDBClient(apiKey, proxy)
+	bangumiService := NewBanbumiService(client)
+	testSeason := 3
+
+	testOffset := bangumiService.CalculateAutoOffset(94664, testSeason)
+
+	t.Logf("计算第 %d 季的集数偏移为 %d", testSeason, testOffset)
+}
