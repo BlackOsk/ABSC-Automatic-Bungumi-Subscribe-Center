@@ -21,7 +21,7 @@ type BangumiMetadata struct {
 type Subscription struct {
 	MikanID    int             `gorm:"primaryKey;column:mikan_id"`
 	Status     string          `gorm:"default:'none';column:status"` // none, subscribing, archived
-	QbCategory string          `gorm:"column:qb_category"`
+	QBCategory string          `gorm:"column:qb_category"`
 	RSSFeedURL string          `gorm:"column:rss_feed_url"`
 	SavePath   string          `gorm:"column:save_path"`
 	CreatedAt  time.Time       `gorm:"autoCreateTime"`
