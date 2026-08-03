@@ -17,7 +17,7 @@ type BangumiService struct {
 	TMDBClient *scraper.TMDBClient
 }
 
-func NewBanbumiService(tmdbClient *scraper.TMDBClient) *BangumiService {
+func NewBangumiService(tmdbClient *scraper.TMDBClient) *BangumiService {
 	return &BangumiService{TMDBClient: tmdbClient}
 }
 

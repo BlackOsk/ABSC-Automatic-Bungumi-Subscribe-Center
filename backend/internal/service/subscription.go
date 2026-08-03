@@ -6,7 +6,7 @@ import (
 	"ABSC/internal/model"
 	"fmt"
 	"log"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"gorm.io/gorm/clause"
@@ -29,10 +29,12 @@ type SubscriptionService struct {
 }
 
 func NewSubscriptionService(qb *client.QBitClient, bangumiSrv *BangumiService, seriesDir string) *SubscriptionService {
+	cleanSeriesDir := strings.ReplaceAll(seriesDir, "\\", "/")
+
 	return &SubscriptionService{
 		QbitClient: qb,
 		BangumiSrv: bangumiSrv,
-		SeriesDir:  strings.TrimSuffix(seriesDir, "/"),
+		SeriesDir:  strings.TrimSuffix(cleanSeriesDir, "/"),
 	}
 }
 
@@ -79,7 +81,7 @@ func (s *SubscriptionService) Subscribe(req SubscribeRequest) error {
 
 	// 计算 NAS 上的物理存储落盘路径
 	categoryName := bangumi.TitleCN
-	savePath := filepath.Join(s.SeriesDir, categoryName, fmt.Sprintf("Season %02d", req.Season))
+	savePath := path.Join(s.SeriesDir, categoryName, fmt.Sprintf("Season %02d", req.Season))
 
 	// 联动 qBittorrent 下发自动化订阅控制命令
 	log.Printf("	正在向 qBittorrent 下发化订阅指令...")

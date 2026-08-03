@@ -6,6 +6,7 @@ import (
 	"ABSC/internal/model"
 	"fmt"
 	"log"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -20,9 +21,10 @@ type RenameService struct {
 }
 
 func NewRenameService(qbClient *client.QBitClient, seriesDir, incompleteDir string) *RenameService {
+	cleanSeriesDir := strings.ReplaceAll(seriesDir, "\\", "/")
 	return &RenameService{
 		QBitClient:      qbClient,
-		SeriesDirectory: strings.TrimSuffix(seriesDir, "/") + "/",
+		SeriesDirectory: strings.TrimSuffix(cleanSeriesDir, "/") + "/",
 		IncompleteDir:   incompleteDir,
 	}
 }
@@ -153,7 +155,7 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 
 		// 推算该集数真正应该属于哪一季，以及计算扣减后的相对集数
 		targetSeason, relEp := DetermineTargetSeasonAndOffset(absEp, offsets)
-		expectedSavePath := filepath.Join(s.SeriesDirectory, titleCN, fmt.Sprintf("Season %d", targetSeason))
+		expectedSavePath := path.Join(s.SeriesDirectory, titleCN, fmt.Sprintf("Season %d", targetSeason))
 
 		// 比对当前存储路径与预期路径。如果不一致，先执行 setLocation 物理迁移
 		if cleanSavePath != filepath.Clean(expectedSavePath) {
@@ -169,7 +171,7 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 
 		// 计算新规范文件名
 		ext := filepath.Ext(oldFileName)
-		newFileName := filepath.Join(expectedSavePath, fmt.Sprintf("E%02d%s", relEp, ext))
+		newFileName := path.Join(expectedSavePath, fmt.Sprintf("E%02d%s", relEp, ext))
 
 		// 若已是规范名称，无需重复调用
 		if oldFileName == newFileName {

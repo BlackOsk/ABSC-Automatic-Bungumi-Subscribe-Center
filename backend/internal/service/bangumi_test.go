@@ -66,7 +66,7 @@ func TestSyncCurrentQuarterBangumi(t *testing.T) {
 	// 3. 初始化客户端（如果本地电脑需要梯子，填入代理地址，不需要则留空 ""）
 	proxy := "" //"http://127.0.0.1:7897"
 	client := scraper.NewTMDBClient(apiKey, proxy)
-	bangumiService := NewBanbumiService(client)
+	bangumiService := NewBangumiService(client)
 
 	// 4. 执行同步函数
 	t.Log("[TestSyncCurrentQuarterBangumi] 🔄 开始测试同步当季新番流...")
@@ -107,7 +107,7 @@ func TestCalculateAutoOffset(t *testing.T) {
 	// 3. 初始化客户端（如果本地电脑需要梯子，填入代理地址，不需要则留空 ""）
 	proxy := "" //"http://127.0.0.1:7897"
 	client := scraper.NewTMDBClient(apiKey, proxy)
-	bangumiService := NewBanbumiService(client)
+	bangumiService := NewBangumiService(client)
 	testSeason := 3
 
 	testOffset := bangumiService.CalculateAutoOffset(94664, testSeason)
