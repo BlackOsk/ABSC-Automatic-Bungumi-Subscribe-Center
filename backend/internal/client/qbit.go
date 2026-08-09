@@ -124,6 +124,18 @@ func (c *QBitClient) Login() error {
 	return nil
 }
 
+// Logout 登出
+func (c *QBitClient) Logout() error {
+	data := url.Values{}
+
+	// 调用 auth/logout 接口
+	_, err := c.postForm("auth/logout", data)
+	if err != nil {
+		return fmt.Errorf("[Logout] qB 登出失败: %w", err)
+	}
+	return nil
+}
+
 // CreateCategory 创建以番剧命名的独立分类，并绑定 NAS 物理存储路径
 func (c *QBitClient) CreateCategory(category, savePath string) error {
 	data := url.Values{}

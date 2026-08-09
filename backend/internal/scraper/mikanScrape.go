@@ -73,6 +73,7 @@ func cleanTitleAndExtractSeason(rawTitle string) (string, int) {
 	// 4. 收尾清理：干掉连续的多余空格及无用连接符（如 ～ -）
 	t = regexp.MustCompile(`[-～~〜—]`).ReplaceAllString(t, " ")
 	t = regexp.MustCompile(`\s+`).ReplaceAllString(t, " ")
+	t = strings.TrimSpace(t)
 
 	return t, currentSeason
 }

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"os"
 	"testing"
 )
 
@@ -61,12 +62,15 @@ func TestQBitPipelineReal(t *testing.T) {
 
 // TestGetQbTorrents 测试获取种子列表
 func TestGetQbTorrents(t *testing.T) {
-	qbURL := "http://192.168.2.148:8080"
-	username := "1"
-	password := "1"
+	qbURL := getEnvOrDefault("QB_URL", "http://192.168.2.148:8080")
+	qbUser := getEnvOrDefault("QB_USER", "admin")
+	qbPass := getEnvOrDefault("QB_PASS", "adminadmin")
+	tmdbAPI := getEnvOrDefault("TMDB_API_KEY", "")
+
+	t.Log(qbURL, qbUser, qbPass, tmdbAPI)
 
 	t.Log("🚀 正在初始化 Go 强类型 qBittorrent 客户端...")
-	client, err := NewQBitClient(qbURL, username, password)
+	client, err := NewQBitClient(qbURL, qbUser, qbPass)
 	if err != nil {
 		t.Fatalf("初始化客户端失败: %v", err)
 	}
@@ -87,4 +91,12 @@ func TestGetQbTorrents(t *testing.T) {
 	for _, torrent := range torrentinfo {
 		t.Log(torrent.SavePath)
 	}
+}
+
+// getEnvOrDefault 辅助函数：读取环境变量，为空则使用默认 fallback 值
+func getEnvOrDefault(key, defaultValue string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return defaultValue
 }

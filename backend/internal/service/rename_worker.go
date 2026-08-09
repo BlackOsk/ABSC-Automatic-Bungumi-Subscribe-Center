@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"path"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -36,6 +35,7 @@ var episodePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`\[([0-9]{2})\]`),
 	regexp.MustCompile(`\[([0-9]{2})v[0-9]\]`),
 	regexp.MustCompile(`\s([0-9]{2})v[0-9]\s`),
+	regexp.MustCompile(`\s([0-9]{2})v[0-9]`),
 	regexp.MustCompile(`(?i)E([0-9]{2})`), // 容错支持 E01 格式
 }
 
@@ -53,29 +53,29 @@ func ExtractAbsoluteEpisode(fileName string) (bool, int) {
 	return false, 0
 }
 
-// // ExtractAndCalculateEpisode 从原始长文件名中提取集数，并根据 offset 计算相对集数
-// func ExtractAndCalculateEpisode(fileName string, offset int) (bool, string) {
-// 	for _, pattern := range episodePatterns {
-// 		matches := pattern.FindStringSubmatch(fileName)
-// 		if len(matches) >= 2 {
-// 			// matches[1] 抓取到的是纯数字集数（如 "13"）
-// 			absEp, err := strconv.Atoi(matches[1])
-// 			if err != nil {
-// 				continue
-// 			}
+// ExtractAndCalculateEpisode 从原始长文件名中提取集数，并根据 offset 计算相对集数
+func ExtractAndCalculateEpisode(fileName string, offset int) (bool, string) {
+	for _, pattern := range episodePatterns {
+		matches := pattern.FindStringSubmatch(fileName)
+		if len(matches) >= 2 {
+			// matches[1] 抓取到的是纯数字集数（如 "13"）
+			absEp, err := strconv.Atoi(matches[1])
+			if err != nil {
+				continue
+			}
 
-// 			// 计算相对集数：绝对集数 - 偏移量
-// 			relEp := absEp - offset
-// 			if relEp <= 0 {
-// 				relEp = absEp // 保护机制：如果减完<=0，退回到绝对集数
-// 			}
+			// 计算相对集数：绝对集数 - 偏移量
+			relEp := absEp - offset
+			if relEp <= 0 {
+				relEp = absEp // 保护机制：如果减完<=0，退回到绝对集数
+			}
 
-// 			// 格式化输出为 E01, E02 等标准格式
-// 			return true, fmt.Sprintf("E%02d", relEp)
-// 		}
-// 	}
-// 	return false, ""
-// }
+			// 格式化输出为 E01, E02 等标准格式
+			return true, fmt.Sprintf("E%02d", relEp)
+		}
+	}
+	return false, ""
+}
 
 // DetermineTargetSeasonAndOffset 根据 SQLite 中的多季偏移配置，判断绝对集数归属于哪一季，并计算相对集数和目标路径
 func DetermineTargetSeasonAndOffset(absEp int, offsets []model.EpisodeOffset) (int, int) {
@@ -103,16 +103,22 @@ func DetermineTargetSeasonAndOffset(absEp int, offsets []model.EpisodeOffset) (i
 
 // ExecuteRenameTask 扫描最近下载完成的种子并实施规范化重命名
 func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
-	log.Println("启动重命名")
+	// 0. 登录qbit
+	if err := s.QBitClient.Login(); err != nil {
+		return fmt.Errorf("[ExecuteRenameTask] qBittorrent 登录失败: %w", err)
+	}
 
+	log.Println("[ExecuteRenameTask] 启动重命名")
 	// 1. 调用 qb API 获取最近的种子列表
 	torrents, err := s.QBitClient.GetTorrents(checkLimit)
 	if err != nil {
-		return fmt.Errorf("获取种子列表失败: %w", err)
+		return fmt.Errorf("[ExecuteRenameTask] 获取种子列表失败: %w", err)
 	}
 
 	for _, t := range torrents {
-		cleanSavePath := filepath.Clean(t.SavePath)
+		cleanSavePath := path.Clean(t.SavePath)
+
+		// log.Printf("[ExecuteRenameTask] 检测到种子: %s (Hash: %s, 保存路径: %s)", t.Name, t.Hash, cleanSavePath)
 
 		// 判断未完成的torrents，未完成不改名
 		if strings.Contains(t.SavePath, s.IncompleteDir) {
@@ -124,9 +130,8 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 			continue
 		}
 
-		// 从路径中解析 relative 相对文件名
-		oldFileName := strings.TrimPrefix(t.SavePath, s.SeriesDirectory)
-
+		// 解析文件名
+		oldFileName := t.Name
 		// 提取文件名中的绝对集数
 		matched, absEp := ExtractAbsoluteEpisode(oldFileName)
 		if !matched {
@@ -138,6 +143,7 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 		relSavePath := strings.TrimPrefix(cleanSavePath, s.SeriesDirectory)
 		relSavePath = strings.TrimSuffix(relSavePath, "/")
 		parts := strings.Split(relSavePath, "/")
+		//log.Printf("[ExecuteRenameTask] 解析到的剧名: %s", parts)
 		if len(parts) == 0 || parts[0] == "" {
 			continue
 		}
@@ -150,7 +156,8 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 		if err = database.DB.Where("title_cn = ?", titleCN).First(&bangumi).Error; err == nil {
 			database.DB.Where("mikan_id = ?", bangumi.MikanID).Find(&offsets)
 		} else {
-			return fmt.Errorf("找不到该番剧的偏移配置")
+			log.Printf("[ExecuteRenameTask] 找不到该番剧的偏移配置,跳过本次文件重命名: %v", err)
+			continue
 		}
 
 		// 推算该集数真正应该属于哪一季，以及计算扣减后的相对集数
@@ -158,20 +165,20 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 		expectedSavePath := path.Join(s.SeriesDirectory, titleCN, fmt.Sprintf("Season %d", targetSeason))
 
 		// 比对当前存储路径与预期路径。如果不一致，先执行 setLocation 物理迁移
-		if cleanSavePath != filepath.Clean(expectedSavePath) {
+		if cleanSavePath != path.Clean(expectedSavePath) {
 			log.Printf("触发跨季自动迁移！[绝对集数 %d] 识别为 Season %d，正在将存储路径从 [%s] 迁移至 [%s]...",
 				absEp, targetSeason, cleanSavePath, expectedSavePath)
 			err := s.QBitClient.SetLocation(t.Hash, expectedSavePath)
 			if err != nil {
-				log.Printf("❌ [rename_worker.go] 跨季自动迁移失败: %v", err)
+				log.Printf("❌ [ExecuteRenameTask] 跨季自动迁移失败: %v", err)
 				continue
 			}
-			log.Printf("✅ [rename_worker.go] 跨季自动迁移成功！")
+			log.Printf("✅ [ExecuteRenameTask] 跨季自动迁移成功！")
 		}
 
 		// 计算新规范文件名
-		ext := filepath.Ext(oldFileName)
-		newFileName := path.Join(expectedSavePath, fmt.Sprintf("E%02d%s", relEp, ext))
+		ext := path.Ext(oldFileName)
+		newFileName := fmt.Sprintf("E%02d%s", relEp, ext)
 
 		// 若已是规范名称，无需重复调用
 		if oldFileName == newFileName {
@@ -182,11 +189,16 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 		log.Printf("实施重命名: [%s] -> [%s] (Season %d, Hash: %s)", oldFileName, newFileName, targetSeason, t.Hash)
 		err = s.QBitClient.RenameFile(t.Hash, oldFileName, newFileName)
 		if err != nil {
-			log.Printf("重命名 API 执行失败 [%s]: %v", oldFileName, err)
+			log.Printf("[ExecuteRenameTask] 重命名 API 执行失败 [%s]: %v", oldFileName, err)
 		} else {
-			log.Printf("重命名成功: %s -> %s", oldFileName, newFileName)
+			log.Printf("[ExecuteRenameTask] 重命名成功: %s -> %s", oldFileName, newFileName)
 		}
 	}
 	log.Println("[ExecuteRenameTask] 重命名与路径校准任务完成")
+
+	// 任务完成后登出 qbit
+	if err := s.QBitClient.Logout(); err != nil {
+		log.Printf("[ExecuteRenameTask] qBittorrent 登出失败: %v", err)
+	}
 	return nil
 }
