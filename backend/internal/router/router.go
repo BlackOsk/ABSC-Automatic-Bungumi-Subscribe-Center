@@ -18,7 +18,7 @@ func SetupRouter(
 ) *gin.Engine {
 	r := gin.Default()
 
-	// 1. 配置 CORS 跨域中间件 (方便 React 开发服务 5173 端口无缝请求 Go 8080)
+	// 1. 配置 CORS 跨域中间件 (方便 React 开发服务 5173 端口无缝请求 Go 8899)
 	r.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
 		AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
