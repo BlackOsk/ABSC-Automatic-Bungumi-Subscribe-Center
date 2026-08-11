@@ -81,7 +81,7 @@ func (s *SubscriptionService) Subscribe(req SubscribeRequest) error {
 
 	// 计算 NAS 上的物理存储落盘路径
 	categoryName := bangumi.TitleCN
-	savePath := path.Join(s.SeriesDir, categoryName, fmt.Sprintf("Season %02d", req.Season))
+	savePath := path.Join(s.SeriesDir, categoryName, fmt.Sprintf("Season %d", req.Season))
 
 	// 联动 qBittorrent 下发自动化订阅控制命令
 	log.Printf("	正在向 qBittorrent 下发化订阅指令...")
