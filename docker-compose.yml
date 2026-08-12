@@ -5,13 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: absc
     container_name: ABSC
     restart: always
     ports:
       - "8899:8899"
     environment:
       - PORT=8899
-      - DB_PATH=/app/data/anime.db
+      - ABSC_DB_PATH=/app/data/absc.db
       - QB_URL=http://192.168.1.1:8080        # 替换为你的 qBittorrent 地址
       - QB_USER=admin                         # 替换为你的 qB 账号
       - QB_PASS=adminadmin                    # 替换为你的 qB 密码
@@ -31,6 +32,6 @@ services:
     ports:
       - "8089:8080"
     volumes:
-      - ./data/absc.db:/data/absc.db
+      - ./data:/data
     environment:
       - SQLITE_DATABASE=absc.db

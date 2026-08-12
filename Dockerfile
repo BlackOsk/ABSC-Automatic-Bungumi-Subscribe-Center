@@ -1,7 +1,7 @@
 # =========================================================
 # 阶段 1：构建 React + TypeScript 前端静态文件
 # =========================================================
-FROM node:18-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 # 复制依赖清单并安装
@@ -15,7 +15,7 @@ RUN npm run build
 # =========================================================
 # 阶段 2：编译 Go 后端可执行二进制文件
 # =========================================================
-FROM golang:1.22-alpine AS backend-builder
+FROM golang:1.25-alpine AS backend-builder
 # 安装 CGO 编译 SQLite 所需的 GCC 编译器
 RUN apk add --no-cache gcc musl-dev
 
