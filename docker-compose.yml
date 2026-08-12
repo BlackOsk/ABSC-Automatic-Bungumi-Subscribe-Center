@@ -18,7 +18,19 @@ services:
       - SERIES_DIR=/downloads/Series          # 替换为你在qbittorrent中的剧集存放目录
       - INCOMPLETE_DIR=/downloads/incomplete  # 替换为你在qbittorrent中的剧集存放目录
       - TMDB_API_KEY=your_tmdb_api_key_here   # 填入你的 TMDB API Key
-      - HTTP_PROXY=                           # 软路由代理地址 (选填)
+      #- HTTP_PROXY=                           # 软路由代理地址 (选填)
     volumes:
       # 🎯 核心：将虚拟机的本地目录挂载进容器，确保数据库永久持久化！
       - ./data:/app/data
+
+  # SQLite 网页版可视控制台
+  sqlite-web:
+    image: coleifer/sqlite-web
+    container_name: absc-sqlite-web
+    restart: always
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./data/absc.db:/data/absc.db
+    environment:
+      - SQLITE_DATABASE=absc.db
