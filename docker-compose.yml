@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  ABSC:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ABSC
+    restart: always
+    ports:
+      - "8899:8899"
+    environment:
+      - PORT=8899
+      - DB_PATH=/app/data/anime.db
+      - QB_URL=http://192.168.1.1:8080        # 替换为你的 qBittorrent 地址
+      - QB_USER=admin                         # 替换为你的 qB 账号
+      - QB_PASS=adminadmin                    # 替换为你的 qB 密码
+      - SERIES_DIR=/downloads/Series          # 替换为你在qbittorrent中的剧集存放目录
+      - INCOMPLETE_DIR=/downloads/incomplete  # 替换为你在qbittorrent中的剧集存放目录
+      - TMDB_API_KEY=your_tmdb_api_key_here   # 填入你的 TMDB API Key
+      - HTTP_PROXY=                           # 软路由代理地址 (选填)
+    volumes:
+      # 🎯 核心：将虚拟机的本地目录挂载进容器，确保数据库永久持久化！
+      - ./data:/app/data

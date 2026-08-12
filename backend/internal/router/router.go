@@ -59,6 +59,16 @@ func SetupRouter(
 			offsetGroup.POST("/preview", offsetHandler.PreviewRename)
 		}
 	}
+
+	// 在 router.go 中追加静态资源托管
+	r.Static("/assets", "./dist/assets")
+	r.StaticFile("/favicon.ico", "./dist/favicon.ico")
+
+	// 兼容 SPA 单页应用路由：任何未匹配到 API 的请求，均返回 index.html
+	r.NoRoute(func(c *gin.Context) {
+		c.File("./dist/index.html")
+	})
+
 	return r
 
 }

@@ -4,3 +4,4 @@
 *.http
 *test.go
 note.md
+*.exe
