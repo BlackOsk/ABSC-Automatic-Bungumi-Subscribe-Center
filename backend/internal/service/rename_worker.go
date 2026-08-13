@@ -118,7 +118,7 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 	for _, t := range torrents {
 		cleanSavePath := path.Clean(t.SavePath)
 
-		// log.Printf("[ExecuteRenameTask] 检测到种子: %s (Hash: %s, 保存路径: %s)", t.Name, t.Hash, cleanSavePath)
+		//log.Printf("[ExecuteRenameTask] 检测到种子: %s (Hash: %s, 保存路径: %s)", t.Name, t.Hash, t.ContentPath)
 
 		// 判断未完成的torrents，未完成不改名
 		if strings.Contains(t.SavePath, s.IncompleteDir) {
@@ -131,7 +131,8 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 		}
 
 		// 解析文件名
-		oldFileName := t.Name
+		// oldFileName := t.Name
+		oldFileName := path.Base(t.ContentPath)
 		// 提取文件名中的绝对集数
 		matched, absEp := ExtractAbsoluteEpisode(oldFileName)
 		if !matched {
@@ -175,7 +176,7 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 			}
 
 		} else {
-			log.Printf("[ExecuteRenameTask] 找不到该番剧的偏移配置, 默认提取出集数k后按 Ek 方式重命名")
+			log.Printf("[ExecuteRenameTask] 番剧 [%s] 找不到该番剧的偏移配置, 默认提取出集数k后按 Ek 方式重命名", titleCN)
 			offsets = make([]model.EpisodeOffset, 0)
 			_, relEp = DetermineTargetSeasonAndOffset(absEp, offsets)
 			targetSeason = -1
@@ -204,6 +205,7 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 
 		// 若已是规范名称，无需重复调用
 		if oldFileName == newFileName {
+			log.Printf("[ExecuteRenameTask] 文件名已符合规范，无需重命名: %s", oldFileName)
 			continue
 		}
 
