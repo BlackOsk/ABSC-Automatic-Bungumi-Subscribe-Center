@@ -1,5 +1,5 @@
 # ABSC - Automatic Bangumi Subscribe Center
-> 基于 Go + React + SQLite 构建的，对 Qbittorrent+Jellyfin/Emby 结构的媒体库实现自动化动漫订阅、智能重命名与路径整理的系统。
+> 基于 Go + React + SQLite 构建的，对 Qbittorrent+Jellyfin/Emby 结构的媒体库实现自动化订阅下载、智能重命名与路径整理的系统。
 
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![React Version](https://img.shields.io/badge/React-20+-61DAFB?style=flat&logo=react)](https://react.dev/)
