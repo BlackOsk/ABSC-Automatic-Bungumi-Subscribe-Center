@@ -21,7 +21,7 @@ services:
       - TMDB_API_KEY=your_tmdb_api_key_here   # 填入你的 TMDB API Key
       #- HTTP_PROXY=                           # 软路由代理地址 (选填)
     volumes:
-      # 🎯 核心：将虚拟机的本地目录挂载进容器，确保数据库永久持久化！
+      # 核心：将虚拟机的本地目录挂载进容器，确保数据库永久持久化！
       - ./data:/app/data
 
   # SQLite 网页版可视控制台

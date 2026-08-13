@@ -1,10 +1,9 @@
 # ABSC - Automatic Bangumi Subscribe Center
-> 基于 Go + React + SQLite 构建的全自动化动漫订阅、智能重命名与跨季路径整理系统。
+> 基于 Go + React + SQLite 构建的，对 Qbittorrent+Jellyfin/Emby 结构的媒体库实现自动化动漫订阅、智能重命名与路径整理的系统。
 
-[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org/)
-[![React Version](https://img.shields.io/badge/React-18+-61DAFB?style=flat&logo=react)](https://react.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://golang.org/)
+[![React Version](https://img.shields.io/badge/React-20+-61DAFB?style=flat&logo=react)](https://react.dev/)
 [![Docker Build](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
@@ -14,17 +13,17 @@
 * **字幕组懒加载与一键订阅**：实时抓取 Mikan 各字幕组 RSS 资源与历史文件列表，支持包含/排除关键词过滤，一键直接下发规则至 qBittorrent。
 * **智能改名与跨季自动路径纠偏**：
   * 后台 Cron 守护进程轮询 qBittorrent 下载任务。
-  * 自动基于多季集数偏移量（Offset）将绝对集数换算为标准相对集数（公式：$Episode_{relative} = Episode_{absolute} - Offset$）。
+  * 自动基于多季集数偏移量（Offset）将绝对集数（从下载文件名里提取的集数）换算为相对集数（第N季的第a集）（公式：$Episode_{relative} = Episode_{absolute} - Offset$）。
   * 识别跨季（如 Season 2）后，自动调用 qB API 将物理文件夹从 `Season 1` 迁移至 `Season 2` 并重新命名。
 * **改名实时效果预览**：前端支持点击字幕组历史文件，贴身悬浮即时显示改名后效果（如 `[Group] Title - 13.mp4` $\rightarrow$ `E01.mp4`）。
-* **开箱即用单容器部署**：采用 Docker 多阶段构建，Go 原生托管编译后的 React 静态应用，配合 `sqlite-web` 实现数据图形化维护。
+* **开箱即用单容器部署**：采用 Docker 多阶段构建，Go 托管编译后的 React 静态应用，配合 `sqlite-web` 实现数据图形化维护。
 
 ---
 
 ## 技术栈
 
-* **后端 (Backend)**：Go 1.22 / Gin Framework / GORM (SQLite3) / GoQuery (HTML Scraping) / qBittorrent Web API / TMDB API Client
-* **前端 (Frontend)**：React 18 / TypeScript / Vite 5 / Tailwind CSS / Lucide React / Axios
+* **后端 (Backend)**：Go 1.25 / Gin Framework / GORM (SQLite3) / GoQuery (HTML Scraping) / qBittorrent Web API / TMDB API Client
+* **前端 (Frontend)**：React 20 / TypeScript / Vite 5 / Tailwind CSS / Lucide React / Axios
 * **部署 (Deployment)**：Docker (Multi-Stage Build) / Docker Compose / Alpine Linux
 
 ---
@@ -54,8 +53,8 @@ services:
       - PORT=8899
       - ABSC_DB_PATH=/app/data/absc.db
       - QB_URL=http://192.168.1.1:8080        # 替换为你的 qBittorrent 地址
-      - QB_USER=admin                         # 替换为你的 qB 账号
-      - QB_PASS=adminadmin                    # 替换为你的 qB 密码
+      - QB_USER=admin                         # 替换为你的 qBittorrent 账号
+      - QB_PASS=adminadmin                    # 替换为你的 qBittorrent 密码
       - SERIES_DIR=/downloads/Series          # 替换为你在qbittorrent中的剧集存放目录
       - INCOMPLETE_DIR=/downloads/incomplete  # 替换为你在qbittorrent中的剧集存放目录
       - TMDB_API_KEY=your_tmdb_api_key_here   # 填入你的 TMDB API Key
@@ -92,22 +91,23 @@ docker compose logs -f anime-manager
 
 ---
 
-## 后续计划：
+## 后续计划
 1. 后端：重命名种子文件功能，在数据库中没有对应番剧时，自动按默认集数偏移（0）进行重命名
 2. 后端：蜜柑计划首页的剧场版内容，实现识别
 3. 前端：页面美化
 
-## ⚙️ 环境变量说明
+## 环境变量说明
 
 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `PORT` | `8080` | Web 服务监听端口 |
-| `ABSC_DB_PATH` | `/app/data/absc.db` | SQLite 数据库存储绝对路径 |
-| `QB_URL` | `http://localhost:8080` | qBittorrent 地址 (包含端口) |
+| `ABSC_DB_PATH` | `/app/data/absc.db` | SQLite 数据库存储绝对路径（注意：此路径应和volumes下的容器路径一致） |
+| `ABSC_DB_NAME` | `absc.db` | SQLite 数据库名称|
+| `QB_URL` | `http://192.168.0.100:8080` | qBittorrent 地址 (包含端口) |
 | `QB_USER` | `admin` | qBittorrent 用户名 |
-| `QB_PASS` | `admin` | qBittorrent 密码 |
-| `SERIES_DIR` | `/downloads/Series` | 整理完成后多季存储根目录 |
-| `INCOMPLETE_DIR` | `/downloads/incomplete` | 下载未完成临时目录 |
+| `QB_PASS` | `adminadmin` | qBittorrent 密码 |
+| `SERIES_DIR` | `/downloads/Series` | Qbittorrent中的剧集存储根目录 |
+| `INCOMPLETE_DIR` | `/downloads/incomplete` | Qbittorrent中的下载未完成临时目录 |
 | `TMDB_API_KEY` | - | TMDB API 密钥 (用于抓取海报及元数据) |
 | `HTTP_PROXY` | - | HTTP/HTTPS 代理地址 (选填，加速 TMDB / Mikan 抓取) |
 
@@ -119,8 +119,8 @@ docker compose logs -f anime-manager
 
 ### 前置条件
 
-* Go 1.22+
-* Node.js 18+ & npm
+* Go 1.25+
+* Node.js 20+ & npm
 * GCC 编译器 (Windows 需安装 MinGW-w64，用于 CGO 编译 SQLite3)
 
 ### 1. 后端启动 (Backend)
@@ -153,7 +153,7 @@ npm run dev
 
 ---
 
-## 📁 项目结构概要
+## 项目结构概要
 
 ```text
 .
@@ -184,6 +184,6 @@ npm run dev
 
 ---
 
-## 📄 开源许可证
+## 开源许可证
 
 本项目基于 [MIT License](https://www.google.com/search?q=LICENSE) 许可证开源，欢迎随意 fork 和贡献代码！

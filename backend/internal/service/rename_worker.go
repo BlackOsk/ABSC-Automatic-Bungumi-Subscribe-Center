@@ -152,29 +152,51 @@ func (s *RenameService) ExecuteRenameTask(checkLimit int) error {
 		// 从 SQLite 查找该番剧的所有季数偏移配置
 		var bangumi model.BangumiMetadata
 		var offsets []model.EpisodeOffset
+		var targetSeason int
+		var relEp int
 
 		if err = database.DB.Where("title_cn = ?", titleCN).First(&bangumi).Error; err == nil {
 			database.DB.Where("mikan_id = ?", bangumi.MikanID).Find(&offsets)
+
+			// 推算该集数真正应该属于哪一季，以及计算扣减后的相对集数
+			targetSeason, relEp = DetermineTargetSeasonAndOffset(absEp, offsets)
+			expectedSavePath := path.Join(s.SeriesDirectory, titleCN, fmt.Sprintf("Season %d", targetSeason))
+
+			// 比对当前存储路径与预期路径。如果不一致，先执行 setLocation 物理迁移
+			if cleanSavePath != path.Clean(expectedSavePath) {
+				log.Printf("触发跨季自动迁移！[绝对集数 %d] 识别为 Season %d，正在将存储路径从 [%s] 迁移至 [%s]...",
+					absEp, targetSeason, cleanSavePath, expectedSavePath)
+				err := s.QBitClient.SetLocation(t.Hash, expectedSavePath)
+				if err != nil {
+					log.Printf("❌ [ExecuteRenameTask] 跨季自动迁移失败: %v", err)
+					continue
+				}
+				log.Printf("✅ [ExecuteRenameTask] 跨季自动迁移成功！")
+			}
+
 		} else {
-			log.Printf("[ExecuteRenameTask] 找不到该番剧的偏移配置,跳过本次文件重命名: %v", err)
+			log.Printf("[ExecuteRenameTask] 找不到该番剧的偏移配置, 默认提取出集数k后按 Ek 方式重命名")
+			offsets = make([]model.EpisodeOffset, 0)
+			_, relEp = DetermineTargetSeasonAndOffset(absEp, offsets)
+			targetSeason = -1
 			continue
 		}
 
-		// 推算该集数真正应该属于哪一季，以及计算扣减后的相对集数
-		targetSeason, relEp := DetermineTargetSeasonAndOffset(absEp, offsets)
-		expectedSavePath := path.Join(s.SeriesDirectory, titleCN, fmt.Sprintf("Season %d", targetSeason))
+		// // 推算该集数真正应该属于哪一季，以及计算扣减后的相对集数
+		// targetSeason, relEp := DetermineTargetSeasonAndOffset(absEp, offsets)
+		// expectedSavePath := path.Join(s.SeriesDirectory, titleCN, fmt.Sprintf("Season %d", targetSeason))
 
-		// 比对当前存储路径与预期路径。如果不一致，先执行 setLocation 物理迁移
-		if cleanSavePath != path.Clean(expectedSavePath) {
-			log.Printf("触发跨季自动迁移！[绝对集数 %d] 识别为 Season %d，正在将存储路径从 [%s] 迁移至 [%s]...",
-				absEp, targetSeason, cleanSavePath, expectedSavePath)
-			err := s.QBitClient.SetLocation(t.Hash, expectedSavePath)
-			if err != nil {
-				log.Printf("❌ [ExecuteRenameTask] 跨季自动迁移失败: %v", err)
-				continue
-			}
-			log.Printf("✅ [ExecuteRenameTask] 跨季自动迁移成功！")
-		}
+		// // 比对当前存储路径与预期路径。如果不一致，先执行 setLocation 物理迁移
+		// if cleanSavePath != path.Clean(expectedSavePath) {
+		// 	log.Printf("触发跨季自动迁移！[绝对集数 %d] 识别为 Season %d，正在将存储路径从 [%s] 迁移至 [%s]...",
+		// 		absEp, targetSeason, cleanSavePath, expectedSavePath)
+		// 	err := s.QBitClient.SetLocation(t.Hash, expectedSavePath)
+		// 	if err != nil {
+		// 		log.Printf("❌ [ExecuteRenameTask] 跨季自动迁移失败: %v", err)
+		// 		continue
+		// 	}
+		// 	log.Printf("✅ [ExecuteRenameTask] 跨季自动迁移成功！")
+		// }
 
 		// 计算新规范文件名
 		ext := path.Ext(oldFileName)
